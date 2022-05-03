@@ -30,7 +30,7 @@ FloretFileNamesList = []
 #Search for all files in directory that end with seg.nii.gz
 for file in os.listdir("E:\work\pyscript test"):
     if file.endswith("seg.nii.gz"):
-        file = file[:-9]
+        file = file[:-10]
         FloretFileNamesList.append(file)
         print(file)
         
