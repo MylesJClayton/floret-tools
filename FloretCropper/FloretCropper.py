@@ -13,16 +13,17 @@ import csv
 import argparse
 
 
-def MkDirDict(MainDirectory):
+def MkDirDict(InDirectory,OutDirectory):
     "builds dictionary of filepaths to use later"
     
     
     DirDict = {
-        'main': MainDirectory,
-        'cropped': MainDirectory + "/CroppedImages",
-        'mask': MainDirectory + "/ImageMasks",
-        'threshold': MainDirectory + "/Thresholded",
-        'components': MainDirectory + "/Components"
+        'in': InDirectory,
+        'out': OutDirectory,
+        'cropped': OutDirectory + "/CroppedImages",
+        'mask': OutDirectory + "/ImageMasks",
+        'threshold': OutDirectory + "/Thresholded",
+        'components': OutDirectory + "/Components"
         }
     for path in DirDict:
         if not os.path.exists(DirDict[path]):
@@ -50,11 +51,11 @@ def MkInputList(directory):
     
 
 def main(args):
-    """initialize filters then """
+    """initialize filters then crop for image in input directory"""
     
-    DirDict = MkDirDict(args.path)                 #MAKE THIS WORK FOR SAVING THE DIFFERENT STAGES
+    DirDict = MkDirDict(args.inpath,args.outpath)                 #MAKE THIS WORK FOR SAVING THE DIFFERENT STAGES
     
-    ImageFileList = MkInputList(args.path)
+    ImageFileList = MkInputList(args.inpath)
     
     PixelType = itk.UC
     Dimension = 3
@@ -98,13 +99,13 @@ def main(args):
     writer = itk.ImageFileWriter[ImageType].New()
     Getminmax = sitk.MinimumMaximumImageFilter()
     
-    os.chdir(DirDict['cropped'])
+    os.chdir(DirDict['out'])
     imagedata = open("ImageData.txt", "w" )
     imagedata.write( "Image Name," + "Image Xsize," + "Image Ysize," + "ImageZsize," + "MaskVoxels")
     imagedata.close()
     
     for InputFilename in ImageFileList:
-        os.chdir(DirDict['main'])
+        os.chdir(DirDict['in'])
         print("Reading " + str(InputFilename) , flush=True)
         
         reader.SetFileName(str(InputFilename) + ".nii.gz")
@@ -117,27 +118,14 @@ def main(args):
         Output = otsu_filter.Execute(Input) #Gives binary mask of grain and cylinder
         Thresholded = Output
         
-        os.chdir(DirDict['threshold'])
-        sitkwriter.SetFileName(str(InputFilename) + "threshold.nii.gz")
-        sitkwriter.Execute(Thresholded)
-        
-        
         
         print("Obtaining plant mask for  " + str(InputFilename) , flush=True)
         Output = Componentsfilter.Execute(Output)
         Output = Relabel.Execute(Output)
         Components = Output
         
-        os.chdir(DirDict['components'])
-        sitkwriter.SetFileName(str(InputFilename) + "components.nii.gz")
-        sitkwriter.Execute(Components)
         
         PlantMatter = sitk.BinaryThreshold( Components, 2, 2, 1, 0 )
-        
-        os.chdir(DirDict['mask'])
-        sitkwriter.SetFileName(str(InputFilename) + "PlantMatter" + ".nii.gz")
-        sitkwriter.Execute(PlantMatter)
-        
         
         Output = sitk.Cast(PlantMatter, sitk.sitkFloat32)
         
@@ -171,7 +159,7 @@ def main(args):
         getstats.Execute(PlantMatter)
         
         
-        os.chdir(DirDict['main'])
+        os.chdir(DirDict['out'])
         imagedata = open("ImageData.txt", "a")
         imagedata.write( "\n" + str(InputFilename) +"," + str(CroppedSize[0]) +"," + str(CroppedSize[1]) +"," + str(CroppedSize[2]) +"," + str(getstats.GetSum()))
         imagedata.close()
@@ -180,6 +168,26 @@ def main(args):
         os.chdir(DirDict['cropped'])
         sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
         sitkwriter.Execute(Cropped)
+        
+        if args.troubleshoot: #save intermediate steps if -troubleshoot or -t is specified
+            print('saving intermediate steps (troubleshoot mode)', flush=True)
+            
+            os.chdir(DirDict['threshold'])
+            sitkwriter.SetFileName(str(InputFilename) + "threshold.nii.gz")
+            sitkwriter.Execute(Thresholded)
+            
+            os.chdir(DirDict['components'])
+            sitkwriter.SetFileName(str(InputFilename) + "components.nii.gz")
+            sitkwriter.Execute(Components)
+            
+            os.chdir(DirDict['mask'])
+            sitkwriter.SetFileName(str(InputFilename) + "PlantMatter" + ".nii.gz")
+            sitkwriter.Execute(PlantMatter)
+        
+            
+            
+            
+            
         
         #writer.SetFileName(str(InputFilename) + ".nii.gz")
         #writer.SetInput(rescaler.GetOutput())
@@ -197,9 +205,14 @@ if __name__ == '__main__':
         "as a new image "
     ))
     
-    parser.add_argument('-p', '--path',
+    parser.add_argument('-i', '--inpath',
                         type=str, default=None,
                         help='Input directory absolute path')
+    parser.add_argument('-o', '--outpath',
+                        type=str, default=None,
+                        help='Output directory absolute path')
+    parser.add_argument('-t', '--troubleshoot', action='store_true',
+                        help='Save images  of intermediate steps threshold, components, and mask')
     
     args = parser.parse_args()
     print(args, flush=True)
