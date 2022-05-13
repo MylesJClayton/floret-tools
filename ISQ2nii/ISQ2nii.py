@@ -17,47 +17,78 @@ INSTRUCTIONS FOR USE
 import os
 import itk
 import SimpleITK as sitk
+import argparse
 
-MainDirectory = "D:/Work/NPPC/Pyscripts/ISQ2nii"
-InputDirectory = MainDirectory + "/InputISQ"
-OutputDirectory = MainDirectory + "/Output"
-
-
-os.chdir("D:/Work/NPPC/Pyscripts/ISQ2nii")
-InputFileList = []
-
-#Find suitable files in given directory
-for file in os.listdir(InputDirectory):
-    if file.endswith(".ISQ"):
-        file = file[:-4]
-        InputFileList.append(file)
-        print(file)
-        
-print(str(len(InputFileList)) + "Input ISQs were found")
-
-PixelType = itk.ctype('unsigned char')
-PixelType = itk.RGBPixel[PixelType]
-ImageType = itk.Image[itk.F, 3]
-WriterType = itk.ImageFileWriter[ImageType]
-
-
-for InputFilename in InputFileList:
-    os.chdir(InputDirectory)
-    print("Loading ISQ for  " + str(InputFilename))
+def MkDirDict(InDirectory,OutDirectory):
+    "builds dictionary of filepaths to use later"
     
-    file_name = str(str(InputFilename) + '.ISQ')
+    DirDict = {
+        'in': InDirectory,
+        'out': OutDirectory
+        }
+    for path in DirDict:
+        if not os.path.exists(DirDict[path]):
+            os.makedirs(DirDict[path])
+    
+    return(DirDict)
+
+def main(args):
+    
+    DirDict = MkDirDict(args.inpath, args.outpath)
+    
+    os.chdir(DirDict['in'])
+    InputFileList = []
+    
+    #Find suitable files in given directory
+    for file in os.listdir(DirDict['in']):
+        if file.endswith(".ISQ"):
+            file = file[:-4]
+            InputFileList.append(file)
+            print(file)
+            
+    print(str(len(InputFileList)) + "Input ISQs were found")
+
+    PixelType = itk.ctype('unsigned char')
+    PixelType = itk.RGBPixel[PixelType]
     ImageType = itk.Image[itk.F, 3]
-    reader = itk.ImageFileReader[ImageType].New()
-    imageio = itk.ScancoImageIO.New()
-    reader.SetImageIO(imageio)
-    reader.SetFileName(file_name)
-    reader.Update()
+    WriterType = itk.ImageFileWriter[ImageType]
     
-    os.chdir(OutputDirectory)
-    print("Saving image as Nifti")
-    #Save result in output folder
-    writer = WriterType.New()
-    writer.SetFileName(str(InputFilename) + ".nii.gz")
-    writer.SetInput(reader.GetOutput())
-    writer.Update()
+    for InputFilename in InputFileList:
+        os.chdir(DirDict['in'])
+        print("Loading ISQ for  " + str(InputFilename))
+    
+        file_name = str(str(InputFilename) + '.ISQ')
+        ImageType = itk.Image[itk.F, 3]
+        reader = itk.ImageFileReader[ImageType].New()
+        imageio = itk.ScancoImageIO.New()
+        reader.SetImageIO(imageio)
+        reader.SetFileName(file_name)
+        reader.Update()
+        
+        os.chdir(DirDict['out'])
+        print("Saving image as Nifti")
+        #Save result in output folder
+        writer = WriterType.New()
+        writer.SetFileName(str(InputFilename) + ".nii.gz")
+        writer.SetInput(reader.GetOutput())
+        writer.Update()
+
+
+if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser(description=(
+        "Find all .ISQs in --inpath directory and converts to .nii.gz "
+        "as a new image "
+    ))
+    
+    parser.add_argument('-i', '--inpath',
+                        type=str, default=None,
+                        help='Input directory absolute path')
+    parser.add_argument('-o', '--outpath',
+                        type=str, default=None,
+                        help='Output directory absolute path')
+    
+    args = parser.parse_args()
+    print(args, flush=True)
+    main(args)
 

@@ -21,6 +21,7 @@ def MkDirDict(InDirectory,OutDirectory):
         'in': InDirectory,
         'out': OutDirectory,
         'cropped': OutDirectory + "/CroppedImages",
+        'normcropped': OutDirectory + "/CroppedNormalized",
         'mask': OutDirectory + "/ImageMasks",
         'threshold': OutDirectory + "/Thresholded",
         'components': OutDirectory + "/Components"
@@ -164,13 +165,25 @@ def main(args):
         imagedata.write( "\n" + str(InputFilename) +"," + str(CroppedSize[0]) +"," + str(CroppedSize[1]) +"," + str(CroppedSize[2]) +"," + str(getstats.GetSum()))
         imagedata.close()
         
-        print("Saving image and mask of   " + str(InputFilename) , flush=True)
-        os.chdir(DirDict['cropped'])
-        sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
-        sitkwriter.Execute(Cropped)
+        if args.normalize:
+            NormCropped = Normalize.Execute(Cropped)
+            print("Saving image and mask of   " + str(InputFilename) , flush=True)
+            os.chdir(DirDict['normcropped'])
+            sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
+            sitkwriter.Execute(NormCropped)
+        else:    
+            print("Saving image and mask of   " + str(InputFilename) , flush=True)
+            os.chdir(DirDict['cropped'])
+            sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
+            sitkwriter.Execute(Cropped)
         
         if args.troubleshoot: #save intermediate steps if -troubleshoot or -t is specified
             print('saving intermediate steps (troubleshoot mode)', flush=True)
+            
+            if args.normalize:
+                os.chdir(DirDict['cropped'])
+                sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
+                sitkwriter.Execute(Cropped)
             
             os.chdir(DirDict['threshold'])
             sitkwriter.SetFileName(str(InputFilename) + "threshold.nii.gz")
@@ -213,6 +226,8 @@ if __name__ == '__main__':
                         help='Output directory absolute path')
     parser.add_argument('-t', '--troubleshoot', action='store_true',
                         help='Save images  of intermediate steps threshold, components, and mask')
+    parser.add_argument('-n', '--normalize', action='store_true',
+                        help='Normalize cropped images to have zero mean and unit variance across all voxels')
     
     args = parser.parse_args()
     print(args, flush=True)
