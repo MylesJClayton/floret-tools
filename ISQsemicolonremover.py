@@ -15,6 +15,7 @@ It essentially renames the file, but saves the original
 
 
 import os
+import shutil
 import argparse
 
 def RemoveSemicolon(inpath,outpath,rename=True): #Function can be used by other scripts by specifying paths
@@ -37,7 +38,7 @@ def RemoveSemicolon(inpath,outpath,rename=True): #Function can be used by other 
             os.rename( str(inpath) + "/" + str(InputFilename) + '.ISQ;1', str(inpath) + "/" + str(InputFilename) +  '.ISQ')
     else:
         for InputFilename in RenameListFileList:
-            os.rename( str(inpath) + "/" + str(InputFilename) + '.ISQ;1', str(outpath) + "/" + str(InputFilename) +  '.ISQ')
+            shutil.copy( str(inpath) + "/" + str(InputFilename) + '.ISQ;1', str(outpath) + "/" + str(InputFilename) +  '.ISQ')
  
 
 
@@ -61,7 +62,7 @@ def main(args): #performs function with given argumensts
             os.rename( str(args.inpath) + "/" + str(InputFilename) + '.ISQ;1', str(args.inpath) + "/" + str(InputFilename) +  '.ISQ')
     else:
         for InputFilename in RenameListFileList:
-            os.rename( str(args.inpath) + "/" + str(InputFilename) + '.ISQ;1', str(args.outpath) + "/" + str(InputFilename) +  '.ISQ')
+            shutil.copy( str(args.inpath) + "/" + str(InputFilename) + '.ISQ;1', str(args.outpath) + "/" + str(InputFilename) +  '.ISQ')
  
     
     
