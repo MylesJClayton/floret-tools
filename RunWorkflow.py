@@ -17,7 +17,7 @@ def MkDirDict(InDirectory,OutDirectory):
     DirDict = {
         'in': InDirectory,
         'out': OutDirectory,
-        'bignifi': OutDirectory + "NiftiUncropped",
+        'bignifti': OutDirectory + "/NiftiUncropped",
         'cropped': OutDirectory + "/CroppedImages",
         'normcropped': OutDirectory + "/CroppedNormalized",
         'mask': OutDirectory + "/ImageMasks",
