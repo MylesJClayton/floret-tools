@@ -32,9 +32,9 @@ def MkDirDict(InDirectory,OutDirectory):
     
     return(DirDict)
 
-def main(args):
+def main(inpath,outpath):
     
-    DirDict = MkDirDict(args.inpath, args.outpath)
+    DirDict = MkDirDict(inpath, outpath)
     
     os.chdir(DirDict['in'])
     InputFileList = []
@@ -90,5 +90,5 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     print(args, flush=True)
-    main(args)
+    main(args.inapth,args.outpath)
 

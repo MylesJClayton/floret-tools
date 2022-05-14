@@ -51,12 +51,12 @@ def MkInputList(directory):
     
     
 
-def main(args):
+def main(inpath,outpath,troubleshoot=False,normalize=False):
     """initialize filters then crop for image in input directory"""
     
-    DirDict = MkDirDict(args.inpath,args.outpath)                 #MAKE THIS WORK FOR SAVING THE DIFFERENT STAGES
+    DirDict = MkDirDict(inpath,outpath)                 #MAKE THIS WORK FOR SAVING THE DIFFERENT STAGES
     
-    ImageFileList = MkInputList(args.inpath)
+    ImageFileList = MkInputList(inpath)
     
     PixelType = itk.UC
     Dimension = 3
@@ -165,7 +165,7 @@ def main(args):
         imagedata.write( "\n" + str(InputFilename) +"," + str(CroppedSize[0]) +"," + str(CroppedSize[1]) +"," + str(CroppedSize[2]) +"," + str(getstats.GetSum()))
         imagedata.close()
         
-        if args.normalize:
+        if normalize:
             NormCropped = Normalize.Execute(Cropped)
             print("Saving image and mask of   " + str(InputFilename) , flush=True)
             os.chdir(DirDict['normcropped'])
@@ -177,10 +177,10 @@ def main(args):
             sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
             sitkwriter.Execute(Cropped)
         
-        if args.troubleshoot: #save intermediate steps if -troubleshoot or -t is specified
+        if troubleshoot: #save intermediate steps if troubleshoot is true or -t is specified
             print('saving intermediate steps (troubleshoot mode)', flush=True)
             
-            if args.normalize:
+            if normalize:
                 os.chdir(DirDict['cropped'])
                 sitkwriter.SetFileName(str(InputFilename) + "crop.nii.gz")
                 sitkwriter.Execute(Cropped)
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     print(args, flush=True)
-    main(args)
+    main(args.inpath,args.outpath,troubleshoot=args.troubleshoot,normalize=args.normalize)
 
 
 
