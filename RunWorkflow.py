@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat May 14 13:55:18 2022
-
-@author: myles
+Takes a directory containing ISQ files as inputs -i
+Converts and crops the images
+Places outputs in specified folder -o
 """
 
 import argparse
