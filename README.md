@@ -8,8 +8,8 @@ The smaller images can also be processed by 3D-CNNs, in which case it is recomme
 ## Dependencies:  
 pip install itk  
 pip install SimpleITK  
-pip install numpy 
-pip install itk-ioscanco
+pip install numpy  
+pip install itk-ioscanco  
 
 ## Instructions for use:  
 From virtual environment (such as anaconda) call the script from the command line with python. 
