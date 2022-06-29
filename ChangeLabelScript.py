@@ -1,40 +1,43 @@
 
 """
 Created on Fri Jun 26 14:13:28 2020
-Changes labels for grain, palea, and lemma from 2, 4 and 5 respectively to 1, 2, and 3 respectively
-@author: myles
+Changes labels in segmentation files. Not for use with main images.
+if -f 2 -t 3 given as arguments, label 2 in the image will be changed to label 3
 """
 
 import SimpleITK as sitk
 import os
 import argparse
 
-os.chdir("E:\WORK\pyscript test\ChangeLabels\Input")
-InputFileList = []
-
-#Find suitable files in given directory
-for file in os.listdir("E:\WORK\Pyscripts\ChangeLabels\Input"):
-    if file.endswith(".nii.gz"):
-        file = file[:-7]
-        InputFileList.append(file)
-        print(file)
-        
-print(str(len(InputFileList)) + "Input Labels were found")
-
+def MkInputList(directory):
+    "finds all files in folder ending with nii.gz and adds them to a list"
+    
+    ImageFileList = []
+    
+    for file in os.listdir(directory):
+        if file.endswith(".nii.gz"):
+            file = file[:-7]
+            ImageFileList.append(file)
+    
+    print(str(len(ImageFileList)) + " Input images were found" , flush=True)
+    return(ImageFileList)
 
 def main(args):
-    #Prepare functions for use
+    
+    InputFileList = MkInputList(args.inpath)
+    
+    if not os.path.exists(args.outpath):
+        os.makedirs(args.outpath)
+    
+    #Initialize functions
     reader = sitk.ImageFileReader()
     reader.SetImageIO("NiftiImageIO")
     sitkwriter = sitk.ImageFileWriter()
-    getstats = sitk.StatisticsImageFilter()
-    Normalize = sitk.NormalizeImageFilter()
     
     #loop through each suitable file that was found
     for InputFilename in InputFileList:
-        os.chdir("E:\WORK\Pyscripts\ChangeLabels\Input")
-        print("Processing " + str(InputFilename))
-        print("reading")
+        os.chdir(args.inpath)
+        print("Reading " + str(InputFilename))
         #read file
         reader.SetFileName(str(InputFilename) + ".nii.gz")
         FloretLabelInput = reader.Execute()
@@ -43,33 +46,26 @@ def main(args):
         #If outside of range set voxel value equal to 4th argument
         
         #FOR MERGING LEMMA AND PALEA LABELS INTO ONE CLASS
-        GrainLabel = sitk.BinaryThreshold( FloretLabelInput, 1, 1, 1, 0)
-        ShellLabel = sitk.BinaryThreshold( FloretLabelInput, 2, 3, 2, 0)
+        mask = sitk.BinaryThreshold(FloretLabelInput, args.labelfrom, args.labelfrom, 1, 0)
+        Out = (mask * (args.to - args.labelfrom) + FloretLabelInput)
         
-        OutputFloretLabel = GrainLabel + ShellLabel
-        
-        """
-        #FOR 2->1, 4->2, 5->3
-        GrainLabel = sitk.BinaryThreshold( FloretLabelInput, 2, 2, 1, 0 )
-        PaleaLabel = sitk.BinaryThreshold( FloretLabelInput, 4, 4, 2, 0 )
-        LemmaLabel = sitk.BinaryThreshold( FloretLabelInput, 5, 5, 3, 0 )
-        
-        #Merge each label that we have made into a single image
-        OutputFloretLabel = GrainLabel + PaleaLabel + LemmaLabel
-        """
-        print("saving")
-        #Save result in output folder
-        os.chdir("E:\WORK\Pyscripts\ChangeLabels\Output")
-        sitkwriter.SetFileName(str(InputFilename) + ".nii.gz")
-        sitkwriter.Execute(OutputFloretLabel)
-        
+        print('saving')
+        if args.replace:
+            os.chdir(args.inpath)
+            sitkwriter.SetFileName(str(InputFilename) + ".nii.gz")
+            sitkwriter.Execute(Out)
+        else:
+            #Save result in output folder
+            os.chdir(args.outpath)
+            sitkwriter.SetFileName(str(InputFilename) + ".nii.gz")
+            sitkwriter.Execute(Out)
         
 
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description=(
-        "Identify grain in image, crop and save surrounding area "
-        "as a new image "
+        "Changes labels in segmentation files. Not for use with main images."
+        "if -f 2 -t 3 given as arguments, label 2 in the image will be changed to label 3"
     ))
     
     parser.add_argument('-i', '--inpath',
@@ -78,10 +74,10 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outpath',
                         type=str, default=None,
                         help='Output directory absolute path')
-    parser.add_argument('-f', '--from',
+    parser.add_argument('-f', '--labelfrom',
                         type=int, default=None,
                         help='turn label f into label t')
-    parser.add_argument('-t', 'to', action='store_true',
+    parser.add_argument('-t', '--labelto', action='store_true',
                         help='turn label f into label t')
     parser.add_argument('-r', '--replace', action='store_true',
                         help='If specified, this OVERWRITES the inputs, no outputs needed. SAVING BACKUPS RECOMMENDED' +
@@ -89,6 +85,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args, flush=True)
     main(args.inpath,args.outpath,troubleshoot=args.troubleshoot,normalize=args.normalize)
+
 
 
 
