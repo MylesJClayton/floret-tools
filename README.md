@@ -11,6 +11,9 @@ pip install SimpleITK
 pip install numpy  
 pip install itk-ioscanco  
 
+Use the environment.yml file to create a suitable environment with the required packages
+
+
 ## Instructions for use:  
 From virtual environment (such as anaconda) call the script from the command line with python. 
 Windows example : >python RunWorkflow.py -t -n -i C:/path/to/input/directory -o D:/path/to/output/directory 
