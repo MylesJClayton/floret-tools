@@ -8,7 +8,9 @@ The smaller images can also be processed by 3D-CNNs, in which case it is recomme
 ## Dependencies:
 
 Use the FT-env.yml file to create a suitable environment with the required packages with command
+```
 conda env create -f FT-env.yml
+```
 Read the file to view the required packages. 
 Package Version numbers specified may not be strict requirements but other versions and combinations are untested
 
