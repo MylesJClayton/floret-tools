@@ -5,13 +5,12 @@ This repository allows the user to convert and crop large batches of such 3D ima
 Cropping the volumes massively reduces required stroage space to about 1/20 of the original. 
 The smaller images can also be processed by 3D-CNNs, in which case it is recommened to use the cropping tools normalization functionality.  
 
-## Dependencies:  
-pip install itk  
-pip install SimpleITK  
-pip install numpy  
-pip install itk-ioscanco  
+## Dependencies:
 
-Use the environment.yml file to create a suitable environment with the required packages
+Use the FT-env.yml file to create a suitable environment with the required packages with command
+conda env create -f FT-env.yml
+Read the file to view the required packages. 
+Package Version numbers specified may not be strict requirements but other versions and combinations are untested
 
 
 ## Instructions for use:  
