@@ -1,8 +1,7 @@
 
 """
-Takes 3D Nifti images of grains within a cylinder and outputs cropped image of just the plant matter.
-Change MainDirctory string on line 13 to a suitable filepath
-
+This script crops the second largest disconnected component of the foreground into a smaller image
+Scan tube is assumed to be the largest component in the image, and a single wheat floret is assumed to be the second largest 
 @author: Myles Clayton
 """
 import itk
