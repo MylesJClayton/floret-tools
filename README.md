@@ -1,18 +1,18 @@
 # floret-tools
 Computer vision tools for preprocessing images of wheat florets from 3D-μCT scans. 
-Scanco CT scanners create images in the ISQ format which can be hard to work with.
+Scanco CT scanners create images in the ISQ format which can be hard to work with. 
 This repository allows the user to convert and crop large batches of such 3D images. 
 Cropping the volumes massively reduces required stroage space to about 1/20 of the original. 
 The smaller images can also be processed by 3D-CNNs, in which case it is recommened to use the cropping tools normalization functionality.  
 
 ## Dependencies:
 
-Use the FT-env.yml file to create a suitable environment with the required packages with command
+Use the FT-env.yml file to create a suitable environment with the required packages with command 
 ```
 conda env create -f FT-env.yml
 ```
 Read the file to view the required packages. 
-Package Version numbers specified may not be strict requirements but other versions and combinations are untested
+Package Version numbers specified may not be strict requirements but other versions and combinations are untested 
 
 
 ## Instructions for use:  
@@ -27,9 +27,13 @@ Note: When using -i and -o, A backslash is used to denote subdirectories on both
 Sometimes the scanner will save CT scans with the extension .ISQ;1. 
 ISQ filetype can be opened by the itk library but the reader fails when given an ISQ;1 file. 
 The ISQsemicolonremover.py script can either remove ;1 from the filenames or make a copy, saving the original. 
-The latter is recommended and is the default, but the -r or --rename argumant can be given and the process is much faster and easier on storage.
+The latter is recommended and is the default, but the -r or --rename argumant can be given and the process is much faster and easier on storage. 
+
+It is recommended that you either: 
+1) Run the semicolon remover on original files in the default mode, so a copy is made. 
+2) Or you can manually make a copy in suitable place before running the remove script. 
  
-The semicolon remover script must be run seperately (before RunWorkflow.py) if your files have extension .ISQ;1
+The semicolon remover script must be run seperately (before RunWorkflow.py) if your files have extension .ISQ;1 
 
 
 ## Arguments 
