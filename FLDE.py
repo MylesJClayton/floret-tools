@@ -77,8 +77,8 @@ def GrainGrowingSpace(GrainMask,ShellMask,grownumber):
         while dilationcounter < dilationnumber:
             Space = DilateImage.Execute(Space)
             Space = Space - ShellMask + 1
-            CavityDilation = sitk.BinaryThreshold( CavityDilation, 2, 2, 1, 0 )
-            dilationcounter =+ 1
+            Space = sitk.BinaryThreshold( Space, 2, 2, 1, 0 )
+            dilationcounter += 1
         Space = Space - GrainMask
 
         getstats.Execute(Space)
@@ -146,6 +146,9 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
         GrainFeatures = {
                 "FloretName" : FloretFilename
                 }
+        SpaceFeatures = {
+                "FloretName" : FloretFilename
+                }
         PaleaFeatures = {
                 "FloretName" : FloretFilename
                 }
@@ -185,14 +188,31 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
             os.chdir(DirDict['GrainSpace'])
             sitkwriter.SetFileName(str(FloretFilename) + "GrainGrowingSpace_seg.nii.gz")
             sitkwriter.Execute(Space)
+            os.chdir(DirDict['out'])
 
-        "VoxelVolume", "EmptySurroundingSpace"
+        
 
         with open('GrainData.csv', mode='a', newline='') as GrainData_csv:
-            writer = csv.DictWriter(GrainData_csv, fieldnames=fieldnames)
+            writer = csv.DictWriter(GrainData_csv, fieldnames=Grainfieldnames)
             writer.writerow(GrainFeatures)
         
         
+        # Calculate the features, print result and append to the dictionary
+        print('Calculating shape features for ' + str(FloretFilename) + 'GrowingSpace...',)
+        shapeFeatures = shape.RadiomicsShape(FloretLabel, Space)
+        result = shapeFeatures.execute()
+        print('done')
+        
+        print('Calculated shape features for ' + str(FloretFilename) + ' GrowingSpace: ')
+        for (key, val) in six.iteritems(result):
+                SpaceFeatures[key] = np.round(val, 4)
+                print('  ', key, ':', np.round(val, 4))
+        
+        with open('GrowingSpaceData.csv', mode='a', newline='') as GrowingSpaceData_csv:
+            writer = csv.DictWriter(GrowingSpaceData_csv, fieldnames=fieldnames)
+            writer.writerow(SpaceFeatures)
+        
+
         # Calculate the features, print result and append to the dictionary
         print('Calculating shape features for ' + str(FloretFilename) + ' Palea...',)
         shapeFeatures = shape.RadiomicsShape(FloretLabel, PaleaMask)
@@ -265,7 +285,7 @@ if __name__ == '__main__':
                         help='Save images  of intermediate steps threshold, components, and mask')
     parser.add_argument('-g', '--growingspace',
                         type=int, default=0,
-                        help='Number of dilaions of the space around the grain. <5 is recommended')
+                        help='Number of dilaions of the space around the grain. <10 is recommended')
 
     args = parser.parse_args()
     print(args, flush=True)
