@@ -24,15 +24,23 @@ import csv
 import numpy as np
 import argparse 
 
-def MkDirDict(InDirectory,OutDirectory):
+def MkDirDict(InDirectory,OutDirectory,growingspace):
     "builds dictionary of filepaths to use later"
     
-    
-    DirDict = {
-        'in': InDirectory,
-        'out': OutDirectory,
-        'shellmask': OutDirectory + "/ShellMasks"
-        }
+    if growingspace > 0:
+        DirDict = {
+            'in': InDirectory,
+            'out': OutDirectory,
+            'shellmask': OutDirectory + "/ShellMasks",
+            'GrainSpace': OutDirectory + "/GrainGrowingSpace",
+            }
+    else:
+        DirDict = {
+            'in': InDirectory,
+            'out': OutDirectory,
+            'shellmask': OutDirectory + "/ShellMasks"
+            }
+
     for path in DirDict:
         if not os.path.exists(DirDict[path]):
             os.makedirs(DirDict[path])
@@ -87,11 +95,12 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
     sitkwriter = sitk.ImageFileWriter()
     getstats = sitk.StatisticsImageFilter()
 
-    DirDict = MkDirDict(inpath,outpath)
+    DirDict = MkDirDict(inpath,outpath,growingspace)
     InputLabelList = MkInputList(inpath)
 
     print(str(len(InputLabelList)) + " floret labels were found")
 
+    os.chdir(DirDict['out'])
     fieldnames = [ "FloretName", "Elongation", "Flatness", "LeastAxisLength", "MajorAxisLength", "Maximum2DDiameterColumn", "Maximum2DDiameterRow", "Maximum2DDiameterSlice", "Maximum3DDiameter", "MeshVolume", "MinorAxisLength", "Sphericity", "SurfaceArea", "SurfaceVolumeRatio", "VoxelVolume"]
     Grainfieldnames = [ "FloretName", "Elongation", "Flatness", "LeastAxisLength", "MajorAxisLength", "Maximum2DDiameterColumn", "Maximum2DDiameterRow", "Maximum2DDiameterSlice", "Maximum3DDiameter", "MeshVolume", "MinorAxisLength", "Sphericity", "SurfaceArea", "SurfaceVolumeRatio", "VoxelVolume", "EmptySurroundingSpace","SpaceToGrainSurfaceRatio"]
     with open('GrainData.csv', mode='w', newline='') as GrainData_csv:
@@ -116,6 +125,7 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
     for FloretFilename in InputLabelList:
         
         #read segmentation/label file
+        os.chdir(DirDict['in'])
         reader.SetFileName(str(FloretFilename) + "seg.nii.gz")
         FloretLabel = reader.Execute()
         FloretLabel.SetSpacing((0.034, 0.034, 0.034)) #resolution of CT scanner in milimeters
@@ -146,16 +156,16 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
                 "FloretName" : FloretFilename
                 }
         
+        os.chdir(DirDict['out'])
         
+        # Calculate the features, print result and append to the dictionary
+        print('Calculating shape features for ' + str(FloretFilename) + ' Grain...',)
+        shapeFeatures = shape.RadiomicsShape(FloretLabel, GrainMask)
         
         # Set the features to be calculated
         # shapeFeatures.enableFeatureByName('Volume', True)
         shapeFeatures.enableAllFeatures()
 
-        # Calculate the features, print result and append to the dictionary
-        print('Calculating shape features for ' + str(FloretFilename) + ' Grain...',)
-        shapeFeatures = shape.RadiomicsShape(FloretLabel, GrainMask)
-        
         result = shapeFeatures.execute()
         print('done')
         
@@ -164,14 +174,17 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
             GrainFeatures[key] = np.round(val, 4)
             print('  ', key, ':', np.round(val, 4))
         
-
-
         #This is where we calculate raio of growingspace to surface area of grain and insert it into the csv (if growinspace argument is used)
         if growingspace>0:
             #perform dilation on grain mask to obtain available growing space for the grain
             Space,SpaceVolume = GrainGrowingSpace(GrainMask,ShellMask,growingspace) #Dilation number (number of iterations of dilaion) is manually chosen with the growingspace argument
             GrainFeatures["EmptySurroundingSpace"] = SpaceVolume
             GrainFeatures["SpaceToGrainSurfaceRatio"] =  SpaceVolume / GrainFeatures["SurfaceArea"]
+
+            #Save Spacemask
+            os.chdir(DirDict['GrainSpace'])
+            sitkwriter.SetFileName(str(FloretFilename) + "GrainGrowingSpace_seg.nii.gz")
+            sitkwriter.Execute(Space)
 
         "VoxelVolume", "EmptySurroundingSpace"
 
@@ -250,7 +263,7 @@ if __name__ == '__main__':
                         help='Output directory absolute path')
     parser.add_argument('-t', '--troubleshoot', action='store_true',
                         help='Save images  of intermediate steps threshold, components, and mask')
-    parser.add_argument('-g', '--growingspace', action='store_true',
+    parser.add_argument('-g', '--growingspace',
                         type=int, default=0,
                         help='Number of dilaions of the space around the grain. <5 is recommended')
 
