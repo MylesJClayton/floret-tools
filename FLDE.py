@@ -41,7 +41,7 @@ def MkDirDict(InDirectory,OutDirectory):
 
 
 def MkInputList(directory):
-    "finds all files in folder ending with nii.gz and adds them to a list"
+    "finds all files in folder ending with seg.nii.gz and adds them to a list"
     
     ImageFileList = []
     
@@ -93,7 +93,7 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
     print(str(len(InputLabelList)) + " floret labels were found")
 
     fieldnames = [ "FloretName", "Elongation", "Flatness", "LeastAxisLength", "MajorAxisLength", "Maximum2DDiameterColumn", "Maximum2DDiameterRow", "Maximum2DDiameterSlice", "Maximum3DDiameter", "MeshVolume", "MinorAxisLength", "Sphericity", "SurfaceArea", "SurfaceVolumeRatio", "VoxelVolume"]
-    Grainfieldnames = [ "FloretName", "Elongation", "Flatness", "LeastAxisLength", "MajorAxisLength", "Maximum2DDiameterColumn", "Maximum2DDiameterRow", "Maximum2DDiameterSlice", "Maximum3DDiameter", "MeshVolume", "MinorAxisLength", "Sphericity", "SurfaceArea", "SurfaceVolumeRatio", "VoxelVolume", "EmptySurroundingSpace"]
+    Grainfieldnames = [ "FloretName", "Elongation", "Flatness", "LeastAxisLength", "MajorAxisLength", "Maximum2DDiameterColumn", "Maximum2DDiameterRow", "Maximum2DDiameterSlice", "Maximum3DDiameter", "MeshVolume", "MinorAxisLength", "Sphericity", "SurfaceArea", "SurfaceVolumeRatio", "VoxelVolume", "EmptySurroundingSpace","SpaceToGrainSurfaceRatio"]
     with open('GrainData.csv', mode='w', newline='') as GrainData_csv:
         writer = csv.DictWriter(GrainData_csv, fieldnames=Grainfieldnames)
         writer.writeheader()
@@ -132,7 +132,7 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
         sitkwriter.Execute(ShellMask)
         
         "This section is for using pyradiomics to extract sphericity; length, width and height values; "
-        #Define Dictionaries in which the first the first entry is the name of the floret
+        #Define Dictionaries in which the first entry is the name of the floret
         GrainFeatures = {
                 "FloretName" : FloretFilename
                 }
@@ -147,10 +147,6 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
                 }
         
         
-        #perform dilation on grain mask to obtain available growing space for the grain
-        #Dilation number (number of iterations of dilaion) is manually chosen with the growingspace argument
-        if growingspace>0:
-            Space,SpaceVolume = GrainGrowingSpace(GrainMask,ShellMask,growingspace)
         
         # Set the features to be calculated
         # shapeFeatures.enableFeatureByName('Volume', True)
@@ -168,9 +164,16 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
             GrainFeatures[key] = np.round(val, 4)
             print('  ', key, ':', np.round(val, 4))
         
-        #This is where we calculate raio of growingspace to surface area of grain and insert it into the csv
-        #GrainFeatures["PercentageOfCavityFilled"] = GrainFeatures["VoxelVolume"] / CavityFeatures["VoxelVolume"]
-        #GrainFeatures["BranPercentage"] =  BranVolume / GrainFeatures["VoxelVolume"]
+
+
+        #This is where we calculate raio of growingspace to surface area of grain and insert it into the csv (if growinspace argument is used)
+        if growingspace>0:
+            #perform dilation on grain mask to obtain available growing space for the grain
+            Space,SpaceVolume = GrainGrowingSpace(GrainMask,ShellMask,growingspace) #Dilation number (number of iterations of dilaion) is manually chosen with the growingspace argument
+            GrainFeatures["EmptySurroundingSpace"] = SpaceVolume
+            GrainFeatures["SpaceToGrainSurfaceRatio"] =  SpaceVolume / GrainFeatures["SurfaceArea"]
+
+        "VoxelVolume", "EmptySurroundingSpace"
 
         with open('GrainData.csv', mode='a', newline='') as GrainData_csv:
             writer = csv.DictWriter(GrainData_csv, fieldnames=fieldnames)
