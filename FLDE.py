@@ -281,11 +281,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outpath',
                         type=str, default=None,
                         help='Output directory absolute path')
-    parser.add_argument('-t', '--troubleshoot', action='store_true',
-                        help='Save images  of intermediate steps threshold, components, and mask')
     parser.add_argument('-g', '--growingspace',
                         type=int, default=0,
-                        help='Number of dilaions of the space around the grain. <10 is recommended')
+                        help='Number of dilaions of the space around the grain. 5-10 is recommended')
 
     args = parser.parse_args()
     print(args, flush=True)
