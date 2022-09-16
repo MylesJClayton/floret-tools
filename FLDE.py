@@ -1,19 +1,12 @@
 """
-4 csv files with column headings are written to contain the measurements for the grain, cavity, lemma and palea
-The for loop takes all named input floret labels with awn=1, grain=2, bran layer=3, palea=4, lemma=5 and embryo=6
+CSV files with are written which contain the measurements for the grain, lemma, palea, and the available growing space for the grain
+The for loop takes all named input floret labels with grain=1, palea=2, lemma=3
 NOTE: Awn is not currently used for any calculations.
-A mask of the shell is created, saved and then dilated
-volume is filled and dilated shell mask subtracted to create a shrunken cavity.
-Cavity is then dilated to fill most of the shell with a few gaps, most notably, the inside corners. 
-    This is a heavily smoothed version
-Cavity then goes through a process which dilates it and then subtracts the shell from it over multiple iterations.
-    This makes it fill the aforementioned gaps and corners, but it can 'leak' through the gaps in the shell because these gaps aren't being subtracted.
-These 'leaks' are removed by a final process of erosion (because they are thin enough to be removed by this method) and then dilation to refil the cavity
-Shell mask is then subtracted again to remove any pixels that may have overstepped the boundary of the shell. 
-Afterwards stats are calculated using pyradiomics and they are placed into a dictionary and printed
+A mask of the shell is created and saved
+Morphological dilation is applied to the grain multiple times (specified with -g n) and shell subtracted after each
+Original grain is also subtravcted afterwards. 
+The remaining area is assumed to be "The empty space which surrounds the grain, and which the grain is free to expand into"
 Finally a line into each CSV file is created from the dictionary of the respecive floret part's stats 
-
-Change folder path on line 27 to something suitable
 
 """
 import SimpleITK as sitk
