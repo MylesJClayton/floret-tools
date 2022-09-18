@@ -280,6 +280,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print(args, flush=True)
-    main(args.inpath,args.outpath,growingspace=args.growingspace,troubleshoot=args.troubleshoot)
+    main(args.inpath,args.outpath,growingspace=args.growingspace)
     
     
