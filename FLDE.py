@@ -41,14 +41,14 @@ def MkDirDict(InDirectory,OutDirectory,growingspace):
     return(DirDict)
 
 
-def MkInputList(directory):
+def MkInputList(directory,suffix):
     "finds all files in folder ending with seg.nii.gz and adds them to a list"
     
     ImageFileList = []
     
     for file in os.listdir(directory):
-        if file.endswith("seg.nii.gz"):
-            file = file[:-10]
+        if file.endswith(suffix):
+            file = file[:-(len(suffix))]
             ImageFileList.append(file)
     
     print(str(len(ImageFileList)) + " Input images were found" , flush=True)
@@ -87,9 +87,12 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
     reader.SetImageIO("NiftiImageIO")
     sitkwriter = sitk.ImageFileWriter()
     getstats = sitk.StatisticsImageFilter()
+    Componentsfilter = sitk.ConnectedComponentImageFilter()
+    Relabel = sitk.RelabelComponentImageFilter()
 
     DirDict = MkDirDict(inpath,outpath,growingspace)
-    InputLabelList = MkInputList(inpath)
+    FilenameSuffix = "Segm.nii.gz"
+    InputLabelList = MkInputList(inpath,FilenameSuffix)
 
     print(str(len(InputLabelList)) + " floret labels were found")
 
@@ -119,12 +122,19 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
         
         #read segmentation/label file
         os.chdir(DirDict['in'])
-        reader.SetFileName(str(FloretFilename) + "seg.nii.gz")
+        reader.SetFileName(str(FloretFilename) + FilenameSuffix)
         FloretLabel = reader.Execute()
         FloretLabel.SetSpacing((0.034, 0.034, 0.034)) #resolution of CT scanner in milimeters
         
-        #obtain shell mask by thresholding labels 2 and 3 which are the palea and lemma respectively 
+        
+       
+        #Grain mask is assumed to be the largest object with label 1 (Removes smaller 'islands' of isolated 1s which are common in predictions)
         GrainMask = sitk.BinaryThreshold( FloretLabel, 1, 1, 1, 0 )
+        GrainComponents = Componentsfilter.Execute(GrainMask)
+        RelabelledGrainComponents = Relabel.Execute(GrainComponents) 
+        GrainMask = sitk.BinaryThreshold( RelabelledGrainComponents, 1, 1, 1, 0 )
+
+        #obtain shell mask by thresholding labels 2 and 3 which are the palea and lemma respectively
         PaleaMask = sitk.BinaryThreshold( FloretLabel, 2, 2, 1, 0 )
         LemmaMask = sitk.BinaryThreshold( FloretLabel, 3, 3, 1, 0 )
         ShellMask = PaleaMask + LemmaMask #Shell mask obtained by elementwise addition of the masks
@@ -205,7 +215,7 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
             writer = csv.DictWriter(GrowingSpaceData_csv, fieldnames=fieldnames)
             writer.writerow(SpaceFeatures)
         
-
+        
         # Calculate the features, print result and append to the dictionary
         print('Calculating shape features for ' + str(FloretFilename) + ' Palea...',)
         shapeFeatures = shape.RadiomicsShape(FloretLabel, PaleaMask)
@@ -236,7 +246,7 @@ def main(inpath,outpath,growingspace=0,troubleshoot=False):
         with open('LemmaData.csv', mode='a', newline='') as LemmaData_csv:
             writer = csv.DictWriter(LemmaData_csv, fieldnames=fieldnames)
             writer.writerow(LemmaFeatures)
-
+        
 
         # Calculate the features, print result and append to the dictionary
         print('Calculating shape features ' + str(FloretFilename) + ' for Shell...',)
