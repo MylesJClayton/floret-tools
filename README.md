@@ -76,6 +76,17 @@ The semicolon remover script must be run seperately (before RunWorkflow.py) if y
   -r, --rename          Rename ISQ;1 to ISQ in same directory Much faster for bulk processing but WILL NOT keep
                         originals
 ```
+### FLDE.py (Floret Label Data Extraction)
+```
+  -h, --help            show this help message and exit
+  -i INPATH, --inpath INPATH
+                        Input directory absolute path
+  -o OUTPATH, --outpath OUTPATH
+                        Output directory absolute path
+  -g GROWINGSPACE, --growingspace GROWINGSPACE
+                        Number of dilaions of the space around the grain. 5-10
+                        is recommended
+```
 
 ## Cropper Methodology  
 The script makes a note of each nii.gz file in the input directory and the following process is applied for each one: 
