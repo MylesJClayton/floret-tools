@@ -19,9 +19,13 @@ Package Version numbers specified may not be strict requirements but other versi
 From virtual environment (such as anaconda) call the script from the command line with python. 
 Windows example : >python RunWorkflow.py -t -n -i C:/path/to/input/directory -o D:/path/to/output/directory 
 
-You can use the ISQ2nii, and FloretCropper scripts separately. 
-
 Note: When using -i and -o, A backslash is used to denote subdirectories on both Linux and Windows. 
+
+All scripts can be used seperately, the Runworkflow script is a work in progress and currently only works with ISQ2nii, FloretCropper, and Normalizer. 
+
+### FLDE (Floret Label Data Extraction): 
+This script extracts information from label/segmentation files, which this library does not generate. After labelling florets, this will extract Grain, Lemma, Palea, Shell (Lemma and Palea combined), and GrainGrowin space Data. The latter two can be used to infer cavity traits.   
+
 
 ### Semicolons in filenames
 Sometimes the scanner will save CT scans with the extension .ISQ;1. 
